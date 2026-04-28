@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "flowvault-audit",
   "display_name": "FlowVault Audit",
-  "version": "0.1.0",
-  "description": "Deterministic reliability audit for n8n workflow JSON. Workflow stays on your machine.",
-  "long_description": "FlowVault Audit MCP runs three deterministic reliability checks on raw n8n workflow JSON: (1) error path coverage - flags failable nodes with no error branch, (2) suppression-check pre-send - flags outbound workflows missing or inverting a suppression / unsubscribe / DNC gate before the send, (3) auth drift - flags stale credential references and credentials with no rotation hint. Returns a structured audit report with severity-ranked findings, actionable fix hints, and a Production-Ready grade. The audit core is rules, not LLM judgement: same input, same output. Workflow JSON never leaves your machine - the server is local stdio. Part of the FlowVault reliability layer.",
+  "version": "0.2.0",
+  "description": "Deterministic reliability audit for n8n. Paste workflow JSON or connect to your n8n instance directly. Workflow data stays on your machine.",
+  "long_description": "FlowVault Audit MCP runs three deterministic reliability checks on n8n workflows: (1) error path coverage - flags failable nodes with no error branch, (2) suppression-check pre-send - flags outbound workflows missing or inverting a suppression / unsubscribe / DNC gate before the send, (3) auth drift - flags stale credential references and credentials with no rotation hint. Two surfaces, same audit core: paste raw workflow JSON for a one-shot audit, or connect to your own n8n REST API to list workflows, audit one by id, or sweep the entire instance with a worst-first portfolio report. Returns structured findings with severity-ranked fix hints and a Production-Ready grade. The audit core is rules, not LLM judgement: same input, same output. The MCP server is a local stdio process - workflow JSON never leaves your machine, and n8n calls go directly from your machine to your own n8n. Part of the FlowVault reliability layer.",
   "author": {
     "name": "NordSym AB",
     "email": "gustav@nordsym.com",
@@ -23,13 +23,49 @@
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"]
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "N8N_BASE_URL": "${user_config.n8n_base_url}",
+        "N8N_API_KEY": "${user_config.n8n_api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "n8n_base_url": {
+      "type": "string",
+      "title": "n8n base URL",
+      "description": "Optional. Your n8n base URL (e.g. https://yourname.app.n8n.cloud). If set, the audit can list and grade your workflows without re-authenticating each call. Leave blank if you only want the paste-JSON workflow tool.",
+      "required": false,
+      "sensitive": false
+    },
+    "n8n_api_key": {
+      "type": "string",
+      "title": "n8n API key",
+      "description": "Optional. n8n API key with read access to /api/v1/workflows (Settings -> API in n8n). Stored locally by Claude Desktop, never uploaded by FlowVault Audit.",
+      "required": false,
+      "sensitive": true
     }
   },
   "tools": [
     {
       "name": "audit_workflow",
-      "description": "Audit an n8n workflow JSON export for error path coverage, suppression-check pre-send, and auth drift. Returns a structured reliability report with severity-ranked findings, fix hints, and a Production-Ready grade."
+      "description": "Audit raw n8n workflow JSON for error path coverage, suppression-check pre-send, and auth drift."
+    },
+    {
+      "name": "connect_n8n",
+      "description": "Connect to an n8n instance via base URL + API key. Verifies access and stores the connection for the session."
+    },
+    {
+      "name": "list_n8n_workflows",
+      "description": "List workflow id + name + active status from the connected n8n instance."
+    },
+    {
+      "name": "audit_n8n_workflow",
+      "description": "Audit one workflow from the connected n8n instance by id."
+    },
+    {
+      "name": "audit_all_n8n_workflows",
+      "description": "Audit every workflow on the connected n8n instance. Returns a worst-first portfolio report."
     }
   ],
   "keywords": [

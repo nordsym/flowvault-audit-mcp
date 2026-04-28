@@ -1,6 +1,6 @@
 {
   "name": "@nordsym/flowvault-audit-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "FlowVault Audit MCP - deterministic reliability audit for n8n workflow JSON. Runs locally via Claude Desktop MCP.",
   "type": "module",
@@ -16,7 +16,7 @@
     "build": "tsc -p .",
     "dev": "tsx src/server.ts",
     "audit": "tsx src/cli-audit.ts",
-    "test": "tsx src/test.ts",
+    "test": "tsx src/test.ts && tsx src/test-instance.ts",
     "bundle": "bash mcpb/build.sh"
   },
   "keywords": [
