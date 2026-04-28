@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "flowvault-audit",
   "display_name": "FlowVault Audit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Deterministic reliability audit for n8n. Paste workflow JSON or connect to your n8n instance directly. Workflow data stays on your machine.",
   "long_description": "FlowVault Audit MCP runs three deterministic reliability checks on n8n workflows: (1) error path coverage - flags failable nodes with no error branch, (2) suppression-check pre-send - flags outbound workflows missing or inverting a suppression / unsubscribe / DNC gate before the send, (3) auth drift - flags stale credential references and credentials with no rotation hint. Two surfaces, same audit core: paste raw workflow JSON for a one-shot audit, or connect to your own n8n REST API to list workflows, audit one by id, or sweep the entire instance with a worst-first portfolio report. Returns structured findings with severity-ranked fix hints and a Production-Ready grade. The audit core is rules, not LLM judgement: same input, same output. The MCP server is a local stdio process - workflow JSON never leaves your machine, and n8n calls go directly from your machine to your own n8n. Part of the FlowVault reliability layer.",
   "author": {
@@ -66,6 +66,10 @@
     {
       "name": "audit_all_n8n_workflows",
       "description": "Audit every workflow on the connected n8n instance. Returns a worst-first portfolio report."
+    },
+    {
+      "name": "flowvault_status",
+      "description": "Diagnostic. Reports MCP version and whether an n8n connection is loaded, including its source (env vars or explicit connect_n8n)."
     }
   ],
   "keywords": [

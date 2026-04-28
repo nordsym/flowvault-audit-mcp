@@ -13,17 +13,38 @@
 import { normalizeBaseUrl, type N8nClientConfig } from "./n8n-client.js";
 
 let connection: N8nClientConfig | null = null;
+let connectionSource: "env" | "connect_n8n" | "none" = "none";
 
 export function seedFromEnv(): void {
   const base = process.env.N8N_BASE_URL?.trim();
   const key = process.env.N8N_API_KEY?.trim();
   if (base && key) {
     connection = { baseUrl: normalizeBaseUrl(base), apiKey: key };
+    connectionSource = "env";
   }
+}
+
+export function getConnectionSource(): "env" | "connect_n8n" | "none" {
+  return connectionSource;
+}
+
+export function envSnapshot(): {
+  N8N_BASE_URL_set: boolean;
+  N8N_API_KEY_set: boolean;
+  N8N_BASE_URL_value: string | null;
+} {
+  const base = process.env.N8N_BASE_URL?.trim();
+  const key = process.env.N8N_API_KEY?.trim();
+  return {
+    N8N_BASE_URL_set: !!base,
+    N8N_API_KEY_set: !!key,
+    N8N_BASE_URL_value: base ?? null,
+  };
 }
 
 export function setConnection(baseUrl: string, apiKey: string): N8nClientConfig {
   connection = { baseUrl: normalizeBaseUrl(baseUrl), apiKey };
+  connectionSource = "connect_n8n";
   return connection;
 }
 
@@ -33,6 +54,7 @@ export function getConnection(): N8nClientConfig | null {
 
 export function clearConnection(): void {
   connection = null;
+  connectionSource = "none";
 }
 
 // Build a per-call config: explicit args override stored state. Both must be

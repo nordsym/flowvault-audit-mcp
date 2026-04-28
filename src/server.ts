@@ -23,7 +23,9 @@ import { z } from "zod";
 import { auditWithMarkdown } from "./audit.js";
 import { ping } from "./n8n-client.js";
 import {
+  envSnapshot,
   getConnection,
+  getConnectionSource,
   redactApiKey,
   resolveConfig,
   seedFromEnv,
@@ -38,7 +40,7 @@ import {
 import { renderMarkdown } from "./report.js";
 
 const PRODUCT_NAME = "flowvault-audit-mcp";
-const PRODUCT_VERSION = "0.2.0";
+const PRODUCT_VERSION = "0.2.1";
 
 function configMissing(): {
   content: Array<{ type: "text"; text: string }>;
@@ -251,6 +253,56 @@ async function main() {
       return {
         content: [{ type: "text", text: renderMarkdown(res.report) }],
         structuredContent: { ok: true, report: res.report, workflow_id: args.workflow_id },
+      };
+    },
+  );
+
+  // ─── Diagnostic: show what the running server has loaded ─────────────────
+  server.registerTool(
+    "flowvault_status",
+    {
+      title: "FlowVault Audit MCP status",
+      description:
+        "Diagnostic. Reports the running server version, whether an n8n connection is loaded, the source of that connection (env vars or explicit connect_n8n), and which env vars Claude Desktop passed in. Use this when something is not working to confirm the server has the credentials you expect.",
+      inputSchema: {},
+    },
+    async () => {
+      const cfg = getConnection();
+      const env = envSnapshot();
+      const lines: string[] = [
+        `# FlowVault Audit MCP status`,
+        "",
+        `**Version:** ${PRODUCT_VERSION}`,
+        `**Connection source:** ${getConnectionSource()}`,
+        `**Connected:** ${cfg ? "yes" : "no"}`,
+      ];
+      if (cfg) {
+        lines.push(`**Base URL:** ${cfg.baseUrl}`);
+        lines.push(`**API key:** ${redactApiKey(cfg.apiKey)}`);
+      }
+      lines.push("");
+      lines.push("## Env vars seen by the MCP process");
+      lines.push("");
+      lines.push(`- N8N_BASE_URL set: ${env.N8N_BASE_URL_set}${env.N8N_BASE_URL_value ? ` (${env.N8N_BASE_URL_value})` : ""}`);
+      lines.push(`- N8N_API_KEY set: ${env.N8N_API_KEY_set}`);
+      lines.push("");
+      if (!cfg) {
+        lines.push("## What to do");
+        lines.push("");
+        lines.push("- If the env vars above show as `false`, Claude Desktop did not pipe the user_config values into the MCP process. After filling them in the Extensions sheet, toggle the Enabled switch off and back on to respawn the server with the new env.");
+        lines.push("- Or call `connect_n8n({base_url, api_key})` directly to set them for the current session.");
+      }
+      return {
+        content: [{ type: "text", text: lines.join("\n") }],
+        structuredContent: {
+          ok: true,
+          version: PRODUCT_VERSION,
+          connected: !!cfg,
+          source: getConnectionSource(),
+          base_url: cfg?.baseUrl ?? null,
+          api_key_redacted: cfg ? redactApiKey(cfg.apiKey) : null,
+          env: env,
+        },
       };
     },
   );
