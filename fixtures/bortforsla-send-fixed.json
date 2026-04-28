@@ -1,0 +1,159 @@
+{
+  "name": "Bortforsla Outreach Send (FIXED)",
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Cron Daily 09:00",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": {
+        "triggerTimes": {
+          "item": [{ "mode": "everyDay", "hour": 9, "minute": 0 }]
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Pull Outreach Queue (Airtable)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": {
+        "operation": "list",
+        "application": "appbortforsla",
+        "table": "Outreach Queue"
+      },
+      "credentials": {
+        "airtableApi": { "id": "cred-airtable-bortforsla", "name": "Airtable Bortforsla (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "n3",
+      "name": "Pull Suppression List (Airtable)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 380],
+      "parameters": {
+        "operation": "list",
+        "application": "appbortforsla",
+        "table": "Suppression List"
+      },
+      "credentials": {
+        "airtableApi": { "id": "cred-airtable-bortforsla", "name": "Airtable Bortforsla (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "n4",
+      "name": "Merge Queue + Suppression",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [640, 280],
+      "parameters": { "mode": "combine", "joinMode": "innerJoin" }
+    },
+    {
+      "id": "n5",
+      "name": "IF Recipient On Suppression",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, 280],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.email}}",
+              "operation": "equal",
+              "value2": "={{$json.suppressed_email}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n6",
+      "name": "Gmail Send Outreach",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1100, 380],
+      "parameters": {
+        "operation": "send",
+        "subject": "Bortforsla offer",
+        "message": "={{$json.body}}"
+      },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail-bortforsla", "name": "Gmail Bortforsla (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "n7",
+      "name": "Mark Suppressed (no-op)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1100, 200]
+    },
+    {
+      "id": "n8",
+      "name": "On Error - Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [1320, 480],
+      "parameters": {
+        "operation": "post",
+        "channel": "#bortforsla-alerts",
+        "text": "Outreach send failed for {{$json.email}}"
+      },
+      "credentials": {
+        "slackApi": { "id": "cred-slack-alerts", "name": "Slack Alerts (rotated 2026-04-01)" }
+      },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Cron Daily 09:00": {
+      "main": [
+        [
+          { "node": "Pull Outreach Queue (Airtable)", "type": "main", "index": 0 },
+          { "node": "Pull Suppression List (Airtable)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Pull Outreach Queue (Airtable)": {
+      "main": [
+        [{ "node": "Merge Queue + Suppression", "type": "main", "index": 0 }]
+      ],
+      "error": [
+        [{ "node": "On Error - Slack Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Pull Suppression List (Airtable)": {
+      "main": [
+        [{ "node": "Merge Queue + Suppression", "type": "main", "index": 1 }]
+      ],
+      "error": [
+        [{ "node": "On Error - Slack Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Merge Queue + Suppression": {
+      "main": [
+        [{ "node": "IF Recipient On Suppression", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF Recipient On Suppression": {
+      "main": [
+        [{ "node": "Mark Suppressed (no-op)", "type": "main", "index": 0 }],
+        [{ "node": "Gmail Send Outreach", "type": "main", "index": 0 }]
+      ]
+    },
+    "Gmail Send Outreach": {
+      "error": [
+        [{ "node": "On Error - Slack Alert", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "tags": ["outreach", "bortforsla"]
+}

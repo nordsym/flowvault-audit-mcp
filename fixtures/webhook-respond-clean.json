@@ -1,0 +1,67 @@
+{
+  "name": "Webhook Lookup API (CLEAN, no outbound)",
+  "nodes": [
+    {
+      "id": "w1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 200],
+      "parameters": { "httpMethod": "POST", "path": "lookup" },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "w2",
+      "name": "Lookup Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": { "operation": "executeQuery", "query": "SELECT * FROM lookup WHERE id = $1" },
+      "credentials": {
+        "postgres": { "id": "cred-pg-lookup", "name": "Postgres Lookup (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "w3",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [640, 200],
+      "parameters": { "values": { "string": [{ "name": "result", "value": "={{$json}}" }] } }
+    },
+    {
+      "id": "w4",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [860, 200],
+      "parameters": { "respondWith": "json" },
+      "continueOnFail": true
+    },
+    {
+      "id": "w5",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [860, 380],
+      "parameters": { "respondWith": "json", "responseBody": "{\"error\": true}" },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Lookup Postgres", "type": "main", "index": 0 }]],
+      "error": [[{ "node": "Respond Error", "type": "main", "index": 0 }]]
+    },
+    "Lookup Postgres": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]],
+      "error": [[{ "node": "Respond Error", "type": "main", "index": 0 }]]
+    },
+    "Format Response": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

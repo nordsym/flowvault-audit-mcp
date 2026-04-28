@@ -1,0 +1,54 @@
+{
+  "name": "@nordsym/flowvault-audit-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FlowVault Audit MCP - deterministic reliability audit for n8n workflow JSON. Runs locally via Claude Desktop MCP.",
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "flowvault-audit-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p .",
+    "dev": "tsx src/server.ts",
+    "audit": "tsx src/cli-audit.ts",
+    "test": "tsx src/test.ts",
+    "bundle": "bash mcpb/build.sh"
+  },
+  "keywords": [
+    "mcp",
+    "n8n",
+    "workflow",
+    "audit",
+    "reliability",
+    "flowvault",
+    "nordsym"
+  ],
+  "author": {
+    "name": "NordSym AB",
+    "email": "gustav@nordsym.com",
+    "url": "https://nordsym.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nordsym/flowvault-audit-mcp"
+  },
+  "homepage": "https://flowvault.se",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

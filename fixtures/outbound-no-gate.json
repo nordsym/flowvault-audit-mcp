@@ -1,0 +1,56 @@
+{
+  "name": "Cold Outreach Blast (NO GATE)",
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 1 }] } }
+    },
+    {
+      "id": "t2",
+      "name": "List Contacts",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": { "operation": "list", "table": "Contacts" },
+      "credentials": {
+        "airtableApi": { "id": "cred-at-blast", "name": "Airtable Blast" }
+      }
+    },
+    {
+      "id": "t3",
+      "name": "Compose Body",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [640, 200],
+      "parameters": { "values": { "string": [{ "name": "body", "value": "Hi {{$json.first_name}}" }] } }
+    },
+    {
+      "id": "t4",
+      "name": "Gmail Send",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [860, 200],
+      "parameters": { "operation": "send", "subject": "Hello", "message": "={{$json.body}}" },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail-blast", "name": "Gmail Blast" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "List Contacts", "type": "main", "index": 0 }]]
+    },
+    "List Contacts": {
+      "main": [[{ "node": "Compose Body", "type": "main", "index": 0 }]]
+    },
+    "Compose Body": {
+      "main": [[{ "node": "Gmail Send", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

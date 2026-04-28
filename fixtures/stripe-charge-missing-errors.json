@@ -1,0 +1,45 @@
+{
+  "name": "Stripe Charge + Receipt (missing error handling)",
+  "nodes": [
+    {
+      "id": "p1",
+      "name": "Webhook Order",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 200],
+      "parameters": { "httpMethod": "POST", "path": "order" }
+    },
+    {
+      "id": "p2",
+      "name": "Stripe Create Charge",
+      "type": "n8n-nodes-base.stripe",
+      "typeVersion": 1,
+      "position": [420, 200],
+      "parameters": { "resource": "charge", "operation": "create", "amount": "={{$json.amount}}", "currency": "usd" },
+      "credentials": {
+        "stripeApi": { "id": "cred-stripe-OLD-test", "name": "Stripe Test (legacy)" }
+      }
+    },
+    {
+      "id": "p3",
+      "name": "Send Receipt Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [640, 200],
+      "parameters": { "operation": "send", "subject": "Receipt", "message": "Thanks" },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail-receipts", "name": "Gmail Receipts" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Order": {
+      "main": [[{ "node": "Stripe Create Charge", "type": "main", "index": 0 }]]
+    },
+    "Stripe Create Charge": {
+      "main": [[{ "node": "Send Receipt Email", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

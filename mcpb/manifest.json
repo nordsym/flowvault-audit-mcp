@@ -1,0 +1,53 @@
+{
+  "manifest_version": "0.3",
+  "name": "flowvault-audit",
+  "display_name": "FlowVault Audit",
+  "version": "0.1.0",
+  "description": "Deterministic reliability audit for n8n workflow JSON. Workflow stays on your machine.",
+  "long_description": "FlowVault Audit MCP runs three deterministic reliability checks on raw n8n workflow JSON: (1) error path coverage - flags failable nodes with no error branch, (2) suppression-check pre-send - flags outbound workflows missing or inverting a suppression / unsubscribe / DNC gate before the send, (3) auth drift - flags stale credential references and credentials with no rotation hint. Returns a structured audit report with severity-ranked findings, actionable fix hints, and a Production-Ready grade. The audit core is rules, not LLM judgement: same input, same output. Workflow JSON never leaves your machine - the server is local stdio. Part of the FlowVault reliability layer.",
+  "author": {
+    "name": "NordSym AB",
+    "email": "gustav@nordsym.com",
+    "url": "https://nordsym.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nordsym/flowvault-audit-mcp"
+  },
+  "homepage": "https://flowvault.se",
+  "documentation": "https://flowvault.se/audit",
+  "support": "https://github.com/nordsym/flowvault-audit-mcp/issues",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "audit_workflow",
+      "description": "Audit an n8n workflow JSON export for error path coverage, suppression-check pre-send, and auth drift. Returns a structured reliability report with severity-ranked findings, fix hints, and a Production-Ready grade."
+    }
+  ],
+  "keywords": [
+    "n8n",
+    "workflow",
+    "audit",
+    "reliability",
+    "flowvault",
+    "nordsym",
+    "mcp",
+    "claude-desktop"
+  ],
+  "license": "MIT",
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

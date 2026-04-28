@@ -1,0 +1,39 @@
+{
+  "name": "Disabled Send Should Be Ignored (CLEAN)",
+  "nodes": [
+    {
+      "id": "d1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": {}
+    },
+    {
+      "id": "d2",
+      "name": "Build Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [420, 200],
+      "parameters": { "values": { "string": [{ "name": "msg", "value": "test" }] } }
+    },
+    {
+      "id": "d3",
+      "name": "Disabled Gmail Send",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [640, 200],
+      "disabled": true,
+      "parameters": { "operation": "send", "subject": "skip me", "message": "skip" },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail-stub", "name": "Gmail Stub (rotated 2026-04-15)" }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Payload", "type": "main", "index": 0 }]] },
+    "Build Payload": { "main": [[{ "node": "Disabled Gmail Send", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {}
+}

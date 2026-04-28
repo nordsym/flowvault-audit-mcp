@@ -1,0 +1,98 @@
+{
+  "name": "Multi-tier Outreach via Switch (CLEAN)",
+  "nodes": [
+    {
+      "id": "x1",
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": { "triggerTimes": { "item": [{ "mode": "everyDay", "hour": 11 }] } }
+    },
+    {
+      "id": "x2",
+      "name": "Pull Leads",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": { "operation": "list", "table": "Leads" },
+      "credentials": {
+        "airtableApi": { "id": "cred-at-leads", "name": "Airtable Leads (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "x3",
+      "name": "Switch on Suppression Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [640, 200],
+      "parameters": {
+        "rules": {
+          "rules": [
+            { "operation": "equal", "value1": "={{$json.suppression_status}}", "value2": "suppressed" },
+            { "operation": "equal", "value1": "={{$json.suppression_status}}", "value2": "bounced" },
+            { "operation": "equal", "value1": "={{$json.suppression_status}}", "value2": "active" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "x4",
+      "name": "Drop Suppressed (no-op)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [860, 60]
+    },
+    {
+      "id": "x5",
+      "name": "Drop Bounced (no-op)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [860, 200]
+    },
+    {
+      "id": "x6",
+      "name": "Gmail Send Outreach",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [860, 360],
+      "parameters": { "operation": "send", "subject": "Offer", "message": "Hi" },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail-outreach", "name": "Gmail Outreach (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "x7",
+      "name": "Error Sink",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [1080, 480],
+      "parameters": { "operation": "post", "channel": "#alerts", "text": "Outreach error" },
+      "credentials": {
+        "slackApi": { "id": "cred-slack-ops", "name": "Slack Ops (rotated 2026-04-01)" }
+      },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Cron": { "main": [[{ "node": "Pull Leads", "type": "main", "index": 0 }]] },
+    "Pull Leads": {
+      "main": [[{ "node": "Switch on Suppression Status", "type": "main", "index": 0 }]],
+      "error": [[{ "node": "Error Sink", "type": "main", "index": 0 }]]
+    },
+    "Switch on Suppression Status": {
+      "main": [
+        [{ "node": "Drop Suppressed (no-op)", "type": "main", "index": 0 }],
+        [{ "node": "Drop Bounced (no-op)", "type": "main", "index": 0 }],
+        [{ "node": "Gmail Send Outreach", "type": "main", "index": 0 }]
+      ]
+    },
+    "Gmail Send Outreach": {
+      "error": [[{ "node": "Error Sink", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

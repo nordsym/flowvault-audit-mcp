@@ -1,0 +1,30 @@
+{
+  "workflowData": {
+    "name": "Editor Export Envelope (CLEAN, validates parser unwrap)",
+    "nodes": [
+      {
+        "id": "e1",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [200, 200],
+        "parameters": {}
+      },
+      {
+        "id": "e2",
+        "name": "Set hello",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3,
+        "position": [420, 200],
+        "parameters": { "values": { "string": [{ "name": "msg", "value": "hi" }] } }
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [[{ "node": "Set hello", "type": "main", "index": 0 }]]
+      }
+    },
+    "active": true,
+    "settings": {}
+  }
+}

@@ -1,0 +1,16 @@
+node_modules
+dist
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+mcpb/server/node_modules
+mcpb/server/package-lock.json
+mcpb/stage
+*.tsbuildinfo
+
+# Keep the bundled mcpb artifact tracked so a fresh clone has a downloadable
+# extension without needing to rebuild. Rebuild produces a deterministic file.
+!mcpb/dist/
+!mcpb/dist/flowvault-audit.mcpb

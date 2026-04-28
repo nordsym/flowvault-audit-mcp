@@ -1,0 +1,41 @@
+{
+  "name": "Twilio SMS Reminder (NO SUPPRESSION)",
+  "nodes": [
+    {
+      "id": "s1",
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": { "triggerTimes": { "item": [{ "mode": "everyDay", "hour": 10 }] } }
+    },
+    {
+      "id": "s2",
+      "name": "Lookup Members",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": { "operation": "executeQuery", "query": "SELECT phone FROM members WHERE active = true" },
+      "credentials": {
+        "postgres": { "id": "cred-pg-prod", "name": "Postgres Prod (rotated 2026-03-15)" }
+      }
+    },
+    {
+      "id": "s3",
+      "name": "Twilio Send SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [640, 200],
+      "parameters": { "operation": "send", "to": "={{$json.phone}}", "message": "Reminder for today" },
+      "credentials": {
+        "twilioApi": { "id": "cred-twilio", "name": "Twilio (rotated 2026-04-10)" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron": { "main": [[{ "node": "Lookup Members", "type": "main", "index": 0 }]] },
+    "Lookup Members": { "main": [[{ "node": "Twilio Send SMS", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": {}
+}
