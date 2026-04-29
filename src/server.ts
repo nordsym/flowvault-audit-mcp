@@ -38,9 +38,15 @@ import {
   renderPortfolioMarkdown,
 } from "./audit-instance.js";
 import { renderMarkdown } from "./report.js";
+import {
+  readLicenseKeyFromEnv,
+  redactLicenseKey,
+  requireTier,
+  verifyLicense,
+} from "./license.js";
 
 const PRODUCT_NAME = "flowvault-audit-mcp";
-const PRODUCT_VERSION = "0.2.1";
+const PRODUCT_VERSION = "0.3.0";
 
 function configMissing(): {
   content: Array<{ type: "text"; text: string }>;
@@ -263,34 +269,59 @@ async function main() {
     {
       title: "FlowVault Audit MCP status",
       description:
-        "Diagnostic. Reports the running server version, whether an n8n connection is loaded, the source of that connection (env vars or explicit connect_n8n), and which env vars Claude Desktop passed in. Use this when something is not working to confirm the server has the credentials you expect.",
+        "Diagnostic. Reports the running server version, n8n connection state, and FlowVault license tier (pro/free/none). Use this when something is not working to confirm the server has the credentials you expect.",
       inputSchema: {},
     },
     async () => {
       const cfg = getConnection();
       const env = envSnapshot();
+      const licenseKey = readLicenseKeyFromEnv();
+      const license = await verifyLicense();
       const lines: string[] = [
         `# FlowVault Audit MCP status`,
         "",
         `**Version:** ${PRODUCT_VERSION}`,
+        `**License tier:** ${license.tier ?? "none"}${license.valid ? "" : " (invalid)"}`,
+        `**License key:** ${licenseKey ? redactLicenseKey(licenseKey) : "(not set)"}`,
+        `**License source:** ${license.source}`,
         `**Connection source:** ${getConnectionSource()}`,
         `**Connected:** ${cfg ? "yes" : "no"}`,
       ];
       if (cfg) {
-        lines.push(`**Base URL:** ${cfg.baseUrl}`);
-        lines.push(`**API key:** ${redactApiKey(cfg.apiKey)}`);
+        lines.push(`**n8n base URL:** ${cfg.baseUrl}`);
+        lines.push(`**n8n API key:** ${redactApiKey(cfg.apiKey)}`);
       }
       lines.push("");
       lines.push("## Env vars seen by the MCP process");
       lines.push("");
-      lines.push(`- N8N_BASE_URL set: ${env.N8N_BASE_URL_set}${env.N8N_BASE_URL_value ? ` (${env.N8N_BASE_URL_value})` : ""}`);
+      lines.push(
+        `- N8N_BASE_URL set: ${env.N8N_BASE_URL_set}${env.N8N_BASE_URL_value ? ` (${env.N8N_BASE_URL_value})` : ""}`,
+      );
       lines.push(`- N8N_API_KEY set: ${env.N8N_API_KEY_set}`);
+      lines.push(`- FLOWVAULT_LICENSE_KEY set: ${!!licenseKey}`);
       lines.push("");
-      if (!cfg) {
+      if (license.error) {
+        lines.push(`## License diagnostic`);
+        lines.push("");
+        lines.push(`- Error: ${license.error}`);
+        lines.push("");
+      }
+      if (!cfg || !license.valid) {
         lines.push("## What to do");
         lines.push("");
-        lines.push("- If the env vars above show as `false`, Claude Desktop did not pipe the user_config values into the MCP process. After filling them in the Extensions sheet, toggle the Enabled switch off and back on to respawn the server with the new env.");
-        lines.push("- Or call `connect_n8n({base_url, api_key})` directly to set them for the current session.");
+        if (!license.valid) {
+          lines.push(
+            "- Pro tools (portfolio sweeps) need an active license. Get one at https://flowvault.se/pro and paste the key into the FlowVault Audit extension settings.",
+          );
+        }
+        if (!cfg) {
+          lines.push(
+            "- If the n8n env vars above show as `false`, Claude Desktop did not pipe user_config values into the MCP process. After filling them, toggle the extension off/on to respawn with new env.",
+          );
+          lines.push(
+            "- Or call `connect_n8n({base_url, api_key})` directly to set them for the current session.",
+          );
+        }
       }
       return {
         content: [{ type: "text", text: lines.join("\n") }],
@@ -302,18 +333,27 @@ async function main() {
           base_url: cfg?.baseUrl ?? null,
           api_key_redacted: cfg ? redactApiKey(cfg.apiKey) : null,
           env: env,
+          license: {
+            valid: license.valid,
+            tier: license.tier,
+            source: license.source,
+            key_redacted: licenseKey ? redactLicenseKey(licenseKey) : null,
+            email_redacted: license.email_redacted ?? null,
+            error: license.error ?? null,
+            cached: license.cached,
+          },
         },
       };
     },
   );
 
-  // ─── Tool 5: audit ALL workflows (portfolio) ──────────────────────────────
+  // ─── Tool 5: audit ALL workflows (portfolio) [PRO] ────────────────────────
   server.registerTool(
     "audit_all_n8n_workflows",
     {
-      title: "Audit every workflow on the connected n8n instance",
+      title: "Audit every workflow on the connected n8n instance [PRO]",
       description:
-        "Iterate every workflow on the connected n8n instance, run the three-rule audit on each, and return a portfolio report sorted worst-first. Use this for a one-shot reliability sweep across an entire n8n installation. Pagination handled internally.",
+        "[PRO] Iterate every workflow on the connected n8n instance, run the deterministic audit on each, and return a portfolio report sorted worst-first. One-shot reliability sweep across an entire n8n installation. Requires a FlowVault Pro license key (set in extension settings). Get one at https://flowvault.se/pro. Pagination handled internally.",
       inputSchema: {
         active_only: z
           .boolean()
@@ -341,6 +381,30 @@ async function main() {
       },
     },
     async (args) => {
+      const gate = await requireTier("pro");
+      if (!gate.ok) {
+        return {
+          content: [
+            {
+              type: "text",
+              text:
+                gate.message ??
+                "FlowVault Pro license required for portfolio sweeps.",
+            },
+          ],
+          structuredContent: {
+            ok: false,
+            error: {
+              error: "tier_required",
+              required_tier: "pro",
+              current_tier: gate.status.tier,
+              license_valid: gate.status.valid,
+              upgrade_url: "https://flowvault.se/pro",
+            },
+          },
+          isError: true,
+        };
+      }
       const cfg = resolveConfig({ base_url: args.base_url, api_key: args.api_key });
       if (!cfg) return configMissing();
       const res = await auditAll(cfg, {

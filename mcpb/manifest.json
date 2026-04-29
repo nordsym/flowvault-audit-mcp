@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "flowvault-audit",
   "display_name": "FlowVault Audit",
-  "version": "0.2.1",
-  "description": "Deterministic reliability audit for n8n. Paste workflow JSON or connect to your n8n instance directly. Workflow data stays on your machine.",
-  "long_description": "FlowVault Audit MCP runs three deterministic reliability checks on n8n workflows: (1) error path coverage - flags failable nodes with no error branch, (2) suppression-check pre-send - flags outbound workflows missing or inverting a suppression / unsubscribe / DNC gate before the send, (3) auth drift - flags stale credential references and credentials with no rotation hint. Two surfaces, same audit core: paste raw workflow JSON for a one-shot audit, or connect to your own n8n REST API to list workflows, audit one by id, or sweep the entire instance with a worst-first portfolio report. Returns structured findings with severity-ranked fix hints and a Production-Ready grade. The audit core is rules, not LLM judgement: same input, same output. The MCP server is a local stdio process - workflow JSON never leaves your machine, and n8n calls go directly from your machine to your own n8n. Part of the FlowVault reliability layer.",
+  "version": "0.3.0",
+  "description": "Deterministic reliability audit for n8n. Paste workflow JSON or connect to your n8n instance. Free tier audits one workflow at a time. Pro tier (https://flowvault.se/pro) unlocks portfolio sweeps and the full reliability layer.",
+  "long_description": "FlowVault Audit MCP runs three deterministic reliability checks on n8n workflows: (1) error path coverage - flags failable nodes with no error branch, (2) suppression-check pre-send - flags outbound workflows missing or inverting a suppression / unsubscribe / DNC gate before the send, (3) auth drift - flags stale credential references and credentials with no rotation hint. Two surfaces, same audit core: paste raw workflow JSON for a one-shot audit, or connect to your own n8n REST API to list workflows and audit one by id. Free tier covers paste-JSON audits, single-workflow audits, and connection diagnostics. Pro tier unlocks audit_all_n8n_workflows (full-instance sweep with worst-first portfolio report) and the additional rules and LLM gloss layer as they ship. Get a license key at https://flowvault.se/pro and paste it into the License key field below. Returns structured findings with severity-ranked fix hints and a Production-Ready grade. The audit core is rules, not LLM judgement: same input, same output. The MCP server is a local stdio process - workflow JSON never leaves your machine, and n8n calls go directly from your machine to your own n8n.",
   "author": {
     "name": "NordSym AB",
     "email": "gustav@nordsym.com",
@@ -26,11 +26,19 @@
       "args": ["${__dirname}/server/index.js"],
       "env": {
         "N8N_BASE_URL": "${user_config.n8n_base_url}",
-        "N8N_API_KEY": "${user_config.n8n_api_key}"
+        "N8N_API_KEY": "${user_config.n8n_api_key}",
+        "FLOWVAULT_LICENSE_KEY": "${user_config.license_key}"
       }
     }
   },
   "user_config": {
+    "license_key": {
+      "type": "string",
+      "title": "FlowVault license key (Pro)",
+      "description": "Optional. Paste your FlowVault license key (format: flv_xxx) to unlock Pro tools like portfolio sweeps. Get one at https://flowvault.se/pro. Free tier works without a key.",
+      "required": false,
+      "sensitive": true
+    },
     "n8n_base_url": {
       "type": "string",
       "title": "n8n base URL",
@@ -65,11 +73,11 @@
     },
     {
       "name": "audit_all_n8n_workflows",
-      "description": "Audit every workflow on the connected n8n instance. Returns a worst-first portfolio report."
+      "description": "[PRO] Audit every workflow on the connected n8n instance. Returns a worst-first portfolio report. Requires a FlowVault Pro license (https://flowvault.se/pro)."
     },
     {
       "name": "flowvault_status",
-      "description": "Diagnostic. Reports MCP version and whether an n8n connection is loaded, including its source (env vars or explicit connect_n8n)."
+      "description": "Diagnostic. Reports MCP version, n8n connection state, and FlowVault license tier (free/pro/none)."
     }
   ],
   "keywords": [
