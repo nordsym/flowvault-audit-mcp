@@ -68,9 +68,9 @@ export const N8nWorkflowSchema = z
     connections: N8nConnectionsSchema.default({}),
     settings: z.record(z.string(), z.unknown()).optional(),
     staticData: z.unknown().optional(),
-    pinData: z.record(z.string(), z.unknown()).optional(),
+    pinData: z.record(z.string(), z.unknown()).nullish().default({}),
     versionId: z.string().optional(),
-    meta: z.record(z.string(), z.unknown()).optional(),
+    meta: z.record(z.string(), z.unknown()).nullish().default({}),
     tags: z.array(z.unknown()).optional(),
   })
   .passthrough();

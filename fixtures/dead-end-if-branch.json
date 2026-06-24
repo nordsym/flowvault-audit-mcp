@@ -1,0 +1,44 @@
+{
+  "name": "Dead End IF Branch",
+  "nodes": [
+    {
+      "id": "de1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": {}
+    },
+    {
+      "id": "de2",
+      "name": "IF Has Customer",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{$json.customer_id}}", "operation": "isNotEmpty" }]
+        }
+      }
+    },
+    {
+      "id": "de3",
+      "name": "Continue",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [640, 160],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "IF Has Customer", "type": "main", "index": 0 }]] },
+    "IF Has Customer": {
+      "main": [
+        [{ "node": "Continue", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

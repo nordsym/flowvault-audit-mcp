@@ -1,0 +1,18 @@
+{
+  "name": "Null pinData meta parser case",
+  "nodes": [
+    {
+      "id": "np1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": {}
+    }
+  ],
+  "connections": {},
+  "pinData": null,
+  "meta": null,
+  "active": false,
+  "settings": {}
+}

@@ -27,7 +27,7 @@
       "credentials": {
         "airtableApi": { "id": "cred-airtable-bortforsla", "name": "Airtable Bortforsla (rotated 2026-04-01)" }
       },
-      "onError": "continueErrorOutput"
+      "continueOnFail": true
     },
     {
       "id": "n3",
@@ -43,7 +43,7 @@
       "credentials": {
         "airtableApi": { "id": "cred-airtable-bortforsla", "name": "Airtable Bortforsla (rotated 2026-04-01)" }
       },
-      "onError": "continueErrorOutput"
+      "continueOnFail": true
     },
     {
       "id": "n4",
@@ -109,6 +109,22 @@
         "slackApi": { "id": "cred-slack-alerts", "name": "Slack Alerts (rotated 2026-04-01)" }
       },
       "continueOnFail": true
+    },
+    {
+      "id": "n9",
+      "name": "Log Sent Evidence",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1320, 360],
+      "parameters": {
+        "operation": "create",
+        "application": "appbortforsla",
+        "table": "Send Log"
+      },
+      "credentials": {
+        "airtableApi": { "id": "cred-airtable-bortforsla", "name": "Airtable Bortforsla (rotated 2026-04-01)" }
+      },
+      "continueOnFail": true
     }
   ],
   "connections": {
@@ -148,6 +164,9 @@
       ]
     },
     "Gmail Send Outreach": {
+      "main": [
+        [{ "node": "Log Sent Evidence", "type": "main", "index": 0 }]
+      ],
       "error": [
         [{ "node": "On Error - Slack Alert", "type": "main", "index": 0 }]
       ]

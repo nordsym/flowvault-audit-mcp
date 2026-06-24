@@ -7,4 +7,16 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-await import(resolve(here, "compiled", "server.js"));
+try {
+  await import(resolve(here, "compiled", "server.js"));
+} catch (err) {
+  if (err && (err.code === "ERR_MODULE_NOT_FOUND" || err.code === "MODULE_NOT_FOUND")) {
+    console.error(
+      "[flowvault-audit-mcp] Startup failed: a dependency could not be resolved.\n" +
+        "  " + (err.message || String(err)) + "\n" +
+        "  The bundled extension ships its own node_modules. If this is a source checkout, run `npm install` (then `npm run build`) in the project root before launching dist/server.js.",
+    );
+    process.exit(1);
+  }
+  throw err;
+}

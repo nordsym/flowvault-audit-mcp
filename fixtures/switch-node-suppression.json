@@ -19,7 +19,7 @@
       "credentials": {
         "airtableApi": { "id": "cred-at-leads", "name": "Airtable Leads (rotated 2026-04-01)" }
       },
-      "onError": "continueErrorOutput"
+      "continueOnFail": true
     },
     {
       "id": "x3",
@@ -74,6 +74,18 @@
         "slackApi": { "id": "cred-slack-ops", "name": "Slack Ops (rotated 2026-04-01)" }
       },
       "continueOnFail": true
+    },
+    {
+      "id": "x8",
+      "name": "Log Sent Evidence",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1080, 360],
+      "parameters": { "operation": "create", "table": "Send Log" },
+      "credentials": {
+        "airtableApi": { "id": "cred-at-leads", "name": "Airtable Leads (rotated 2026-04-01)" }
+      },
+      "continueOnFail": true
     }
   ],
   "connections": {
@@ -90,6 +102,7 @@
       ]
     },
     "Gmail Send Outreach": {
+      "main": [[{ "node": "Log Sent Evidence", "type": "main", "index": 0 }]],
       "error": [[{ "node": "Error Sink", "type": "main", "index": 0 }]]
     }
   },

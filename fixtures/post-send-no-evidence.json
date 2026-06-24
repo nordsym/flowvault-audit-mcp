@@ -1,0 +1,48 @@
+{
+  "name": "Post Send Missing Evidence",
+  "nodes": [
+    {
+      "id": "ps1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": {}
+    },
+    {
+      "id": "ps2",
+      "name": "Filter Not Unsubscribed",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{$json.unsubscribed}}", "value2": false }]
+        }
+      }
+    },
+    {
+      "id": "ps3",
+      "name": "Gmail Send",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [640, 200],
+      "parameters": {
+        "operation": "send",
+        "to": "={{$json.email}}",
+        "subject": "Update",
+        "message": "Hi"
+      },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail", "name": "Gmail Outreach (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Filter Not Unsubscribed", "type": "main", "index": 0 }]] },
+    "Filter Not Unsubscribed": { "main": [[{ "node": "Gmail Send", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": {}
+}

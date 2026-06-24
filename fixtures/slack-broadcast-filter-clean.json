@@ -19,7 +19,7 @@
       "credentials": {
         "airtableApi": { "id": "cred-at-cust", "name": "Airtable Customers (rotated 2026-04-01)" }
       },
-      "onError": "continueErrorOutput"
+      "continueOnFail": true
     },
     {
       "id": "b3",
@@ -56,6 +56,18 @@
         "httpHeaderAuth": { "id": "cred-sentry", "name": "Sentry Token (rotated 2026-04-12)" }
       },
       "continueOnFail": true
+    },
+    {
+      "id": "b6",
+      "name": "Log Broadcast Evidence",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1080, 200],
+      "parameters": { "operation": "create", "table": "Send Log" },
+      "credentials": {
+        "airtableApi": { "id": "cred-at-cust", "name": "Airtable Customers (rotated 2026-04-01)" }
+      },
+      "continueOnFail": true
     }
   ],
   "connections": {
@@ -68,6 +80,7 @@
       "main": [[{ "node": "Slack Notify Customer", "type": "main", "index": 0 }]]
     },
     "Slack Notify Customer": {
+      "main": [[{ "node": "Log Broadcast Evidence", "type": "main", "index": 0 }]],
       "error": [[{ "node": "On Error - Sentry", "type": "main", "index": 0 }]]
     }
   },

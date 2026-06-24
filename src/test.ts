@@ -180,6 +180,65 @@ const EXPECTATIONS: Expectation[] = [
     expectedGrade: "production-ready",
     mustFind: [],
   },
+  {
+    fixture: "null-pindata-meta.json",
+    description:
+      "Validates parser tolerance for n8n API workflows where pinData/meta are null.",
+    expectedGrade: "production-ready",
+    mustFind: [],
+  },
+  {
+    fixture: "webhook-missing-respond.json",
+    description:
+      "Webhook entrypoint without Respond to Webhook should trigger R8 high.",
+    expectedGrade: "conditional",
+    mustFind: [
+      {
+        rule: "R8.webhook-respond-shape",
+        severity: "high",
+        nodeName: "Webhook",
+      },
+    ],
+  },
+  {
+    fixture: "hardcoded-recipients.json",
+    description:
+      "Literal recipient list on a send node should trigger R9 medium.",
+    expectedGrade: "conditional",
+    mustFind: [
+      {
+        rule: "R9.hardcoded-recipients",
+        severity: "medium",
+        nodeName: "Send Literal Emails",
+      },
+    ],
+  },
+  {
+    fixture: "dead-end-if-branch.json",
+    description:
+      "IF branch with no downstream target should trigger R10 medium.",
+    expectedGrade: "conditional",
+    mustFind: [
+      {
+        rule: "R10.dead-end-branches",
+        severity: "medium",
+        nodeName: "IF Has Customer",
+      },
+    ],
+  },
+  {
+    fixture: "post-send-no-evidence.json",
+    description:
+      "Send action without downstream proof write should trigger R11 medium.",
+    expectedGrade: "conditional",
+    mustFind: [
+      {
+        rule: "R11.post-send-observability",
+        severity: "medium",
+        nodeName: "Gmail Send",
+      },
+    ],
+  },
 ];
 
 function findingMatches(

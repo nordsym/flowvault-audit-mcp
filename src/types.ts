@@ -5,7 +5,11 @@ export type Severity = "critical" | "high" | "medium" | "low" | "info";
 export type RuleId =
   | "R1.error-coverage"
   | "R2.suppression-check"
-  | "R3.auth-drift";
+  | "R3.auth-drift"
+  | "R8.webhook-respond-shape"
+  | "R9.hardcoded-recipients"
+  | "R10.dead-end-branches"
+  | "R11.post-send-observability";
 
 export interface Finding {
   rule: RuleId;

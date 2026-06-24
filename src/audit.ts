@@ -4,6 +4,10 @@ import { parseWorkflowJSON } from "./n8n-types.js";
 import { runErrorCoverage } from "./rules/error-coverage.js";
 import { runSuppressionCheck } from "./rules/suppression-check.js";
 import { runAuthDrift } from "./rules/auth-drift.js";
+import { runWebhookRespondShape } from "./rules/webhook-respond-shape.js";
+import { runHardcodedRecipients } from "./rules/hardcoded-recipients.js";
+import { runDeadEndBranches } from "./rules/dead-end-branches.js";
+import { runPostSendObservability } from "./rules/post-send-observability.js";
 import { buildReport, renderMarkdown } from "./report.js";
 import type { AuditReport, AuditResult, RuleId } from "./types.js";
 
@@ -11,6 +15,10 @@ export const RULES_RUN: RuleId[] = [
   "R1.error-coverage",
   "R2.suppression-check",
   "R3.auth-drift",
+  "R8.webhook-respond-shape",
+  "R9.hardcoded-recipients",
+  "R10.dead-end-branches",
+  "R11.post-send-observability",
 ];
 
 export function audit(workflowJson: string): AuditResult {
@@ -31,8 +39,20 @@ export function audit(workflowJson: string): AuditResult {
   const errorFindings = runErrorCoverage(workflow);
   const suppressionFindings = runSuppressionCheck(workflow);
   const authFindings = runAuthDrift(workflow);
+  const webhookFindings = runWebhookRespondShape(workflow);
+  const hardcodedRecipientFindings = runHardcodedRecipients(workflow);
+  const deadEndBranchFindings = runDeadEndBranches(workflow);
+  const postSendFindings = runPostSendObservability(workflow);
 
-  const all = [...errorFindings, ...suppressionFindings, ...authFindings];
+  const all = [
+    ...errorFindings,
+    ...suppressionFindings,
+    ...authFindings,
+    ...webhookFindings,
+    ...hardcodedRecipientFindings,
+    ...deadEndBranchFindings,
+    ...postSendFindings,
+  ];
   const notes: string[] = [];
 
   if (workflow.nodes.length === 0) {

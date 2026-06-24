@@ -1,0 +1,75 @@
+{
+  "name": "Hardcoded Recipient List",
+  "nodes": [
+    {
+      "id": "hr1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "parameters": {}
+    },
+    {
+      "id": "hr2",
+      "name": "IF Not Suppressed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [420, 200],
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{$json.unsubscribed}}", "value2": false }]
+        }
+      }
+    },
+    {
+      "id": "hr3",
+      "name": "Send Literal Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [640, 300],
+      "parameters": {
+        "operation": "send",
+        "to": "alice@example.com,bob@example.com",
+        "subject": "Update",
+        "message": "Hi"
+      },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail", "name": "Gmail Outreach (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "hr4",
+      "name": "Drop Suppressed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [640, 100]
+    },
+    {
+      "id": "hr5",
+      "name": "Log Sent Evidence",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [860, 300],
+      "parameters": { "operation": "create", "table": "Send Log" },
+      "credentials": {
+        "airtableApi": { "id": "cred-at", "name": "Airtable Leads (rotated 2026-04-01)" }
+      },
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "IF Not Suppressed", "type": "main", "index": 0 }]] },
+    "IF Not Suppressed": {
+      "main": [
+        [{ "node": "Drop Suppressed", "type": "main", "index": 0 }],
+        [{ "node": "Send Literal Emails", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Literal Emails": {
+      "main": [[{ "node": "Log Sent Evidence", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

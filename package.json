@@ -13,7 +13,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc -p . && npm run build:server",
+    "build:server": "esbuild src/server.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/server.js",
     "dev": "tsx src/server.ts",
     "audit": "tsx src/cli-audit.ts",
     "test": "tsx src/test.ts && tsx src/test-instance.ts && tsx src/test-license.ts",
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "esbuild": "^0.27.7",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0"
   },
