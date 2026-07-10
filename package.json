@@ -18,7 +18,8 @@
     "dev": "tsx src/server.ts",
     "audit": "tsx src/cli-audit.ts",
     "test": "tsx src/test.ts && tsx src/test-executions.ts && tsx src/test-instance.ts && tsx src/test-license.ts",
-    "bundle": "bash mcpb/build.sh"
+    "bundle": "bash mcpb/build.sh",
+    "build:browser": "esbuild src/browser.ts --bundle --format=iife --platform=browser --target=es2020 --minify --outfile=dist/browser/flowvault-audit-browser.js"
   },
   "keywords": [
     "mcp",
