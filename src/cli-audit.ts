@@ -24,10 +24,14 @@ async function main() {
   const { result, markdown } = auditWithMarkdown(json);
   if (wantJson) {
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
-    return;
+  } else {
+    process.stdout.write((markdown ?? "") + "\n");
   }
-  process.stdout.write((markdown ?? "") + "\n");
-  if (!result.ok) process.exit(1);
+  // Exit code doubles as a shell-friendly grade gate (used by the Curator):
+  // 0 production-ready, 1 conditional, 2 not-ready, 3 invalid input.
+  if (!result.ok) process.exit(3);
+  const grade = result.report.grade;
+  process.exit(grade === "production-ready" ? 0 : grade === "conditional" ? 1 : 2);
 }
 
 main().catch((err) => {
