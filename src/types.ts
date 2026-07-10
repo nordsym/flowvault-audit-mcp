@@ -6,10 +6,29 @@ export type RuleId =
   | "R1.error-coverage"
   | "R2.suppression-check"
   | "R3.auth-drift"
+  | "R4.idempotency"
+  | "R5.timeouts"
+  | "R7.subworkflow-loop"
   | "R8.webhook-respond-shape"
   | "R9.hardcoded-recipients"
   | "R10.dead-end-branches"
   | "R11.post-send-observability";
+
+// Execution-evidence rules. Run against execution history, not workflow JSON.
+export type ExecRuleId =
+  | "E1.error-rate"
+  | "E2.silent-active"
+  | "E3.green-but-empty"
+  | "E4.unhandled-error-path";
+
+export interface ExecFinding {
+  rule: ExecRuleId;
+  severity: Severity;
+  execution_id: string | null;
+  node_name: string | null;
+  message: string;
+  fix_hint: string;
+}
 
 export interface Finding {
   rule: RuleId;

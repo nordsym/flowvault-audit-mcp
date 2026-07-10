@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "flowvault-audit",
   "display_name": "FlowVault Audit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Deterministic reliability audit for n8n. Paste workflow JSON or connect to your n8n instance. Free tier audits one workflow at a time. Pro tier (https://flowvault.se/pro) unlocks portfolio sweeps and the full reliability layer.",
   "long_description": "FlowVault Audit MCP runs three deterministic reliability checks on n8n workflows: (1) error path coverage - flags failable nodes with no error branch, (2) suppression-check pre-send - flags outbound workflows missing or inverting a suppression / unsubscribe / DNC gate before the send, (3) auth drift - flags stale credential references and credentials with no rotation hint. Two surfaces, same audit core: paste raw workflow JSON for a one-shot audit, or connect to your own n8n REST API to list workflows and audit one by id. Free tier covers paste-JSON audits, single-workflow audits, and connection diagnostics. Pro tier unlocks audit_all_n8n_workflows (full-instance sweep with worst-first portfolio report) and the additional rules and LLM gloss layer as they ship. Get a license key at https://flowvault.se/pro and paste it into the License key field below. Returns structured findings with severity-ranked fix hints and a Production-Ready grade. The audit core is rules, not LLM judgement: same input, same output. The MCP server is a local stdio process - workflow JSON never leaves your machine, and n8n calls go directly from your machine to your own n8n.",
   "author": {
@@ -78,6 +78,14 @@
     {
       "name": "flowvault_status",
       "description": "Diagnostic. Reports MCP version, n8n connection state, and FlowVault license tier (free/pro/none)."
+    },
+    {
+      "name": "audit_n8n_executions",
+      "description": "Execution-evidence audit for one workflow: error rate, dead active triggers, green-but-empty runs where a send node never executed, unhandled error paths. Emits a flowvault.receipt/v1 evidence receipt per inspected run."
+    },
+    {
+      "name": "execution_health",
+      "description": "[PRO] Execution health sweep across the whole n8n instance, ranked worst-first by runtime evidence. Requires a FlowVault Pro license (https://flowvault.se/pro)."
     }
   ],
   "keywords": [

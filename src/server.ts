@@ -44,9 +44,15 @@ import {
   requireTier,
   verifyLicense,
 } from "./license.js";
+import {
+  auditExecutionsForWorkflow,
+  executionHealth,
+  renderExecutionHealthMarkdown,
+  renderExecutionMarkdown,
+} from "./execution-audit.js";
 
 const PRODUCT_NAME = "flowvault-audit-mcp";
-const PRODUCT_VERSION = "0.3.0";
+const PRODUCT_VERSION = "0.4.0";
 
 function configMissing(): {
   content: Array<{ type: "text"; text: string }>;
@@ -83,7 +89,7 @@ async function main() {
     {
       capabilities: { tools: {} },
       instructions:
-        "FlowVault Audit MCP. Two surfaces: (1) audit_workflow({workflow}) for raw JSON paste, (2) connect_n8n + list_n8n_workflows + audit_n8n_workflow + audit_all_n8n_workflows for direct connection to the user's own n8n instance via its REST API. Workflow JSON stays local; the only outbound traffic is from the user's machine to the user's own n8n.",
+        "FlowVault Audit MCP. Three surfaces: (1) audit_workflow({workflow}) for raw JSON paste, (2) connect_n8n + list_n8n_workflows + audit_n8n_workflow + audit_all_n8n_workflows for structural audits against the user's own n8n instance via its REST API, (3) audit_n8n_executions + execution_health for execution evidence: did recent runs actually deliver (error rate, dead triggers, green-but-empty runs where a send node never executed, unhandled error paths), with a flowvault.receipt/v1 evidence receipt per inspected run. Workflow JSON and execution data stay local; the only outbound traffic is from the user's machine to the user's own n8n.",
     },
   );
 
@@ -422,6 +428,132 @@ async function main() {
       return {
         content: [{ type: "text", text: renderPortfolioMarkdown(res.portfolio) }],
         structuredContent: { ok: true, portfolio: res.portfolio },
+      };
+    },
+  );
+
+  // ─── Tool 6: execution-evidence audit for one workflow ───────────────────
+  server.registerTool(
+    "audit_n8n_executions",
+    {
+      title: "Audit recent executions of one workflow (green-but-wrong check)",
+      description:
+        "Grade what a workflow's recent runs ACTUALLY did, not what the JSON promises. Pulls the last N executions from the connected n8n instance and checks: error rate (E1), dead/stuck active workflows (E2), green-but-empty runs where a send node never executed despite status success (E3), and failures with no error path (E4). Returns findings plus one flowvault.receipt/v1 evidence receipt per inspected execution. Complements audit_n8n_workflow, which audits structure.",
+      inputSchema: {
+        workflow_id: z
+          .string()
+          .min(1)
+          .describe("n8n workflow id whose execution history should be audited."),
+        lookback: z
+          .number()
+          .int()
+          .min(1)
+          .max(200)
+          .optional()
+          .describe("How many recent executions to inspect. Defaults to 20."),
+        base_url: z.string().optional().describe("Optional override - n8n base URL for this call only."),
+        api_key: z.string().optional().describe("Optional override - n8n API key for this call only."),
+      },
+    },
+    async (args) => {
+      const cfg = resolveConfig({ base_url: args.base_url, api_key: args.api_key });
+      if (!cfg) return configMissing();
+      const res = await auditExecutionsForWorkflow(cfg, args.workflow_id, { lookback: args.lookback });
+      if (!res.ok) {
+        return {
+          content: [{ type: "text", text: `Failed to audit executions for ${args.workflow_id}: ${res.error}` }],
+          structuredContent: { ok: false, error: { error: "execution_audit_failed", detail: res.error } },
+          isError: true,
+        };
+      }
+      return {
+        content: [{ type: "text", text: renderExecutionMarkdown(res.analysis) }],
+        structuredContent: {
+          ok: true,
+          analysis: {
+            workflow_id: res.analysis.workflow_id,
+            workflow_name: res.analysis.workflow_name,
+            active: res.analysis.active,
+            window: res.analysis.window,
+            counts: res.analysis.counts,
+            findings: res.analysis.findings,
+          },
+          receipts: res.analysis.receipts,
+        },
+      };
+    },
+  );
+
+  // ─── Tool 7: execution health across the instance [PRO] ──────────────────
+  server.registerTool(
+    "execution_health",
+    {
+      title: "Execution health sweep across the connected n8n instance [PRO]",
+      description:
+        "[PRO] Sweep every workflow's recent execution history and rank them worst-first by execution evidence: failure rate, dead active triggers, stuck runs, and unhandled error paths. This is the runtime companion to audit_all_n8n_workflows (which audits structure). Requires a FlowVault Pro license key. For the per-run green-but-empty check and receipts, follow up with audit_n8n_executions on a specific workflow.",
+      inputSchema: {
+        active_only: z
+          .boolean()
+          .optional()
+          .describe("If true, only active workflows are swept. Defaults to false."),
+        lookback: z
+          .number()
+          .int()
+          .min(1)
+          .max(100)
+          .optional()
+          .describe("Executions inspected per workflow. Defaults to 20."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(2000)
+          .optional()
+          .describe("Cap on the number of workflows swept. Defaults to 1000."),
+        base_url: z.string().optional().describe("Optional override - n8n base URL for this call only."),
+        api_key: z.string().optional().describe("Optional override - n8n API key for this call only."),
+      },
+    },
+    async (args) => {
+      const gate = await requireTier("pro");
+      if (!gate.ok) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: gate.message ?? "FlowVault Pro license required for portfolio sweeps.",
+            },
+          ],
+          structuredContent: {
+            ok: false,
+            error: {
+              error: "tier_required",
+              required_tier: "pro",
+              current_tier: gate.status.tier,
+              license_valid: gate.status.valid,
+              upgrade_url: "https://flowvault.se/pro",
+            },
+          },
+          isError: true,
+        };
+      }
+      const cfg = resolveConfig({ base_url: args.base_url, api_key: args.api_key });
+      if (!cfg) return configMissing();
+      const res = await executionHealth(cfg, {
+        activeOnly: args.active_only,
+        lookback: args.lookback,
+        limit: args.limit,
+      });
+      if (!res.ok) {
+        return {
+          content: [{ type: "text", text: `Execution health sweep failed: ${res.error}` }],
+          structuredContent: { ok: false, error: { error: "execution_health_failed", detail: res.error } },
+          isError: true,
+        };
+      }
+      return {
+        content: [{ type: "text", text: renderExecutionHealthMarkdown(res.report) }],
+        structuredContent: { ok: true, report: res.report },
       };
     },
   );

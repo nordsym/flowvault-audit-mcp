@@ -1,0 +1,20 @@
+{
+  "description": "Active workflow with zero executions in the window. E2 high must fire: the trigger is dead and nobody knows.",
+  "now": "2026-07-10T12:00:00.000Z",
+  "workflowId": "wf-exec-3",
+  "workflow": {
+    "name": "Inbound webhook router",
+    "id": "wf-exec-3",
+    "active": true,
+    "nodes": [
+      { "id": "n1", "name": "Webhook", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0], "parameters": { "path": "inbound" } },
+      { "id": "n2", "name": "Respond", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [220, 0], "parameters": {} }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  },
+  "executions": [],
+  "details": {}
+}

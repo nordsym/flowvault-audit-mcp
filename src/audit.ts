@@ -8,6 +8,9 @@ import { runWebhookRespondShape } from "./rules/webhook-respond-shape.js";
 import { runHardcodedRecipients } from "./rules/hardcoded-recipients.js";
 import { runDeadEndBranches } from "./rules/dead-end-branches.js";
 import { runPostSendObservability } from "./rules/post-send-observability.js";
+import { runIdempotency } from "./rules/idempotency.js";
+import { runTimeouts } from "./rules/timeouts.js";
+import { runSubworkflowLoop } from "./rules/subworkflow-loop.js";
 import { buildReport, renderMarkdown } from "./report.js";
 import type { AuditReport, AuditResult, RuleId } from "./types.js";
 
@@ -15,6 +18,9 @@ export const RULES_RUN: RuleId[] = [
   "R1.error-coverage",
   "R2.suppression-check",
   "R3.auth-drift",
+  "R4.idempotency",
+  "R5.timeouts",
+  "R7.subworkflow-loop",
   "R8.webhook-respond-shape",
   "R9.hardcoded-recipients",
   "R10.dead-end-branches",
@@ -43,6 +49,9 @@ export function audit(workflowJson: string): AuditResult {
   const hardcodedRecipientFindings = runHardcodedRecipients(workflow);
   const deadEndBranchFindings = runDeadEndBranches(workflow);
   const postSendFindings = runPostSendObservability(workflow);
+  const idempotencyFindings = runIdempotency(workflow);
+  const timeoutFindings = runTimeouts(workflow);
+  const subworkflowLoopFindings = runSubworkflowLoop(workflow);
 
   const all = [
     ...errorFindings,
@@ -52,6 +61,9 @@ export function audit(workflowJson: string): AuditResult {
     ...hardcodedRecipientFindings,
     ...deadEndBranchFindings,
     ...postSendFindings,
+    ...idempotencyFindings,
+    ...timeoutFindings,
+    ...subworkflowLoopFindings,
   ];
   const notes: string[] = [];
 

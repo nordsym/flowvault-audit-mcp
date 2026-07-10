@@ -1,0 +1,43 @@
+{
+  "description": "Active outreach workflow. Three green runs, but the newest one never ran the Gmail send. E3 must fire; receipt verdict silent-failure.",
+  "now": "2026-07-10T12:00:00.000Z",
+  "workflowId": "wf-exec-1",
+  "workflow": {
+    "name": "Daily outreach sender",
+    "id": "wf-exec-1",
+    "active": true,
+    "nodes": [
+      { "id": "n1", "name": "Cron", "type": "n8n-nodes-base.cron", "typeVersion": 1, "position": [0, 0], "parameters": {} },
+      { "id": "n2", "name": "Fetch Leads", "type": "n8n-nodes-base.airtable", "typeVersion": 2, "position": [220, 0], "parameters": { "operation": "search" } },
+      { "id": "n3", "name": "Gmail Send", "type": "n8n-nodes-base.gmail", "typeVersion": 2.1, "position": [440, 0], "parameters": { "operation": "send" } }
+    ],
+    "connections": {
+      "Cron": { "main": [[{ "node": "Fetch Leads", "type": "main", "index": 0 }]] },
+      "Fetch Leads": { "main": [[{ "node": "Gmail Send", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  },
+  "executions": [
+    { "id": "3003", "workflowId": "wf-exec-1", "status": "success", "mode": "trigger", "startedAt": "2026-07-10T06:00:00.000Z", "stoppedAt": "2026-07-10T06:00:04.000Z" },
+    { "id": "3002", "workflowId": "wf-exec-1", "status": "success", "mode": "trigger", "startedAt": "2026-07-09T06:00:00.000Z", "stoppedAt": "2026-07-09T06:00:05.000Z" },
+    { "id": "3001", "workflowId": "wf-exec-1", "status": "success", "mode": "trigger", "startedAt": "2026-07-08T06:00:00.000Z", "stoppedAt": "2026-07-08T06:00:05.000Z" }
+  ],
+  "details": {
+    "3003": {
+      "id": "3003",
+      "status": "success",
+      "mode": "trigger",
+      "startedAt": "2026-07-10T06:00:00.000Z",
+      "stoppedAt": "2026-07-10T06:00:04.000Z",
+      "data": { "resultData": { "runData": { "Cron": [{}], "Fetch Leads": [{}] }, "lastNodeExecuted": "Fetch Leads" } }
+    },
+    "3002": {
+      "id": "3002",
+      "status": "success",
+      "mode": "trigger",
+      "startedAt": "2026-07-09T06:00:00.000Z",
+      "stoppedAt": "2026-07-09T06:00:05.000Z",
+      "data": { "resultData": { "runData": { "Cron": [{}], "Fetch Leads": [{}], "Gmail Send": [{}] }, "lastNodeExecuted": "Gmail Send" } }
+    }
+  }
+}

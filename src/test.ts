@@ -227,6 +227,33 @@ const EXPECTATIONS: Expectation[] = [
     ],
   },
   {
+    fixture: "ai-assistant-generated.json",
+    description:
+      "AI-builder shaped workflow (webhook -> LLM -> send, zero hardening). The green-but-wrong era target: must grade NOT-READY across R1/R2/R4/R5/R8.",
+    expectedGrade: "not-ready",
+    mustFind: [
+      { rule: "R2.suppression-check", severity: "critical", nodeName: "Gmail - Send Reply" },
+      { rule: "R1.error-coverage", nodeName: "Gmail - Send Reply" },
+      { rule: "R4.idempotency", severity: "medium", nodeName: "Webhook" },
+      { rule: "R5.timeouts", severity: "low", nodeName: "OpenAI - Qualify Lead" },
+      { rule: "R8.webhook-respond-shape", severity: "high", nodeName: "Webhook" },
+    ],
+  },
+  {
+    fixture: "subworkflow-self-loop.json",
+    description:
+      "executeWorkflow that calls its own workflow id. R7 must fire high (unbounded recursion risk).",
+    expectedGrade: "conditional",
+    mustFind: [
+      {
+        rule: "R7.subworkflow-loop",
+        severity: "high",
+        nodeName: "Recurse Into Self",
+        messageIncludes: "executes this same workflow",
+      },
+    ],
+  },
+  {
     fixture: "post-send-no-evidence.json",
     description:
       "Send action without downstream proof write should trigger R11 medium.",

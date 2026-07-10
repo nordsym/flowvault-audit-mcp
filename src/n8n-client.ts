@@ -177,6 +177,82 @@ export async function listWorkflows(
   return { ok: true, value: out };
 }
 
+export interface N8nExecutionSummary {
+  id: string;
+  workflowId: string;
+  status?: string;
+  finished?: boolean;
+  mode?: string;
+  startedAt?: string;
+  stoppedAt?: string | null;
+  waitTill?: string | null;
+}
+
+interface ExecutionsListResponse {
+  data: Array<Record<string, unknown>>;
+  nextCursor?: string | null;
+}
+
+function toExecutionSummary(e: Record<string, unknown>): N8nExecutionSummary | null {
+  const id = (e["id"] as string | number | undefined)?.toString();
+  const workflowId = (e["workflowId"] as string | number | undefined)?.toString();
+  if (!id || !workflowId) return null;
+  return {
+    id,
+    workflowId,
+    status: (e["status"] as string | undefined) ?? undefined,
+    finished: (e["finished"] as boolean | undefined) ?? undefined,
+    mode: (e["mode"] as string | undefined) ?? undefined,
+    startedAt: (e["startedAt"] as string | undefined) ?? undefined,
+    stoppedAt: (e["stoppedAt"] as string | null | undefined) ?? null,
+    waitTill: (e["waitTill"] as string | null | undefined) ?? null,
+  };
+}
+
+// Lists executions newest-first, paginating up to `limit`.
+export async function listExecutions(
+  cfg: N8nClientConfig,
+  opts: { workflowId?: string; status?: "error" | "success" | "waiting"; limit?: number } = {},
+): Promise<N8nResult<N8nExecutionSummary[]>> {
+  const pageSize = 100;
+  const targetLimit = opts.limit && opts.limit > 0 ? opts.limit : 100;
+
+  const out: N8nExecutionSummary[] = [];
+  let cursor: string | undefined = undefined;
+  while (out.length < targetLimit) {
+    const params = new URLSearchParams();
+    if (opts.workflowId) params.set("workflowId", opts.workflowId);
+    if (opts.status) params.set("status", opts.status);
+    params.set("limit", String(Math.min(pageSize, targetLimit - out.length)));
+    if (cursor) params.set("cursor", cursor);
+    const res = await request<ExecutionsListResponse>(cfg, `/api/v1/executions?${params.toString()}`);
+    if (!res.ok) return res;
+    const page = res.value.data ?? [];
+    for (const e of page) {
+      const summary = toExecutionSummary(e);
+      if (summary) out.push(summary);
+      if (out.length >= targetLimit) break;
+    }
+    cursor = res.value.nextCursor ?? undefined;
+    if (!cursor || page.length === 0) break;
+  }
+  return { ok: true, value: out };
+}
+
+// Fetches one execution WITH run data (which nodes actually executed).
+export async function getExecution(
+  cfg: N8nClientConfig,
+  executionId: string,
+): Promise<N8nResult<unknown>> {
+  if (!executionId) {
+    return { ok: false, error: { kind: "config", message: "execution_id is required." } };
+  }
+  return request<unknown>(
+    cfg,
+    `/api/v1/executions/${encodeURIComponent(executionId)}?includeData=true`,
+  );
+}
+
 // Returns the raw workflow JSON shape (nodes + connections + settings).
 export async function getWorkflow(
   cfg: N8nClientConfig,

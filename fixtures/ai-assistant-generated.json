@@ -1,0 +1,63 @@
+{
+  "name": "AI Assistant - Lead intake to email (generated)",
+  "id": "wf-ai-gen-1",
+  "active": true,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ai-assistant-fixture"
+  },
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "parameters": {
+        "path": "lead-intake",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "n2",
+      "name": "OpenAI - Qualify Lead",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [220, 0],
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": "gpt-4o",
+        "prompt": "Qualify this lead and draft a reply: {{ $json.body }}"
+      },
+      "credentials": {
+        "openAiApi": { "id": "cred-openai-1", "name": "OpenAi account" }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Gmail - Send Reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [440, 0],
+      "parameters": {
+        "operation": "send",
+        "sendTo": "={{ $json.email }}",
+        "subject": "Thanks for reaching out",
+        "message": "={{ $json.reply }}"
+      },
+      "credentials": {
+        "gmailOAuth2": { "id": "cred-gmail-1", "name": "Gmail account" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "OpenAI - Qualify Lead", "type": "main", "index": 0 }]]
+    },
+    "OpenAI - Qualify Lead": {
+      "main": [[{ "node": "Gmail - Send Reply", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {}
+}

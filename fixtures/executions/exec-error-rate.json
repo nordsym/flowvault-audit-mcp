@@ -1,0 +1,33 @@
+{
+  "description": "Active workflow with 60% failure rate and no error handling anywhere. E1 critical + E4 high must fire.",
+  "now": "2026-07-10T12:00:00.000Z",
+  "workflowId": "wf-exec-2",
+  "workflow": {
+    "name": "Invoice sync",
+    "id": "wf-exec-2",
+    "active": true,
+    "nodes": [
+      { "id": "n1", "name": "Schedule", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0], "parameters": {} },
+      { "id": "n2", "name": "Stripe Fetch", "type": "n8n-nodes-base.stripe", "typeVersion": 1, "position": [220, 0], "parameters": { "resource": "charge", "operation": "getAll" } },
+      { "id": "n3", "name": "Postgres Upsert", "type": "n8n-nodes-base.postgres", "typeVersion": 2.5, "position": [440, 0], "parameters": { "operation": "upsert" } }
+    ],
+    "connections": {
+      "Schedule": { "main": [[{ "node": "Stripe Fetch", "type": "main", "index": 0 }]] },
+      "Stripe Fetch": { "main": [[{ "node": "Postgres Upsert", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  },
+  "executions": [
+    { "id": "4010", "workflowId": "wf-exec-2", "status": "error", "mode": "trigger", "startedAt": "2026-07-10T10:00:00.000Z", "stoppedAt": "2026-07-10T10:00:02.000Z" },
+    { "id": "4009", "workflowId": "wf-exec-2", "status": "error", "mode": "trigger", "startedAt": "2026-07-10T09:00:00.000Z", "stoppedAt": "2026-07-10T09:00:02.000Z" },
+    { "id": "4008", "workflowId": "wf-exec-2", "status": "success", "mode": "trigger", "startedAt": "2026-07-10T08:00:00.000Z", "stoppedAt": "2026-07-10T08:00:03.000Z" },
+    { "id": "4007", "workflowId": "wf-exec-2", "status": "error", "mode": "trigger", "startedAt": "2026-07-10T07:00:00.000Z", "stoppedAt": "2026-07-10T07:00:02.000Z" },
+    { "id": "4006", "workflowId": "wf-exec-2", "status": "success", "mode": "trigger", "startedAt": "2026-07-10T06:00:00.000Z", "stoppedAt": "2026-07-10T06:00:03.000Z" },
+    { "id": "4005", "workflowId": "wf-exec-2", "status": "error", "mode": "trigger", "startedAt": "2026-07-10T05:00:00.000Z", "stoppedAt": "2026-07-10T05:00:02.000Z" },
+    { "id": "4004", "workflowId": "wf-exec-2", "status": "success", "mode": "trigger", "startedAt": "2026-07-10T04:00:00.000Z", "stoppedAt": "2026-07-10T04:00:03.000Z" },
+    { "id": "4003", "workflowId": "wf-exec-2", "status": "error", "mode": "trigger", "startedAt": "2026-07-10T03:00:00.000Z", "stoppedAt": "2026-07-10T03:00:02.000Z" },
+    { "id": "4002", "workflowId": "wf-exec-2", "status": "success", "mode": "trigger", "startedAt": "2026-07-10T02:00:00.000Z", "stoppedAt": "2026-07-10T02:00:03.000Z" },
+    { "id": "4001", "workflowId": "wf-exec-2", "status": "error", "mode": "trigger", "startedAt": "2026-07-10T01:00:00.000Z", "stoppedAt": "2026-07-10T01:00:02.000Z" }
+  ],
+  "details": {}
+}

@@ -1,0 +1,40 @@
+{
+  "description": "Healthy active workflow: all runs green, send node executed every time. No findings; every receipt verdict delivered.",
+  "now": "2026-07-10T12:00:00.000Z",
+  "workflowId": "wf-exec-4",
+  "workflow": {
+    "name": "Order confirmation sender",
+    "id": "wf-exec-4",
+    "active": true,
+    "nodes": [
+      { "id": "n1", "name": "Webhook", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0], "parameters": { "path": "order" } },
+      { "id": "n2", "name": "Slack Notify", "type": "n8n-nodes-base.slack", "typeVersion": 2.2, "position": [220, 0], "parameters": { "operation": "post" } }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Slack Notify", "type": "main", "index": 0 }]] }
+    },
+    "settings": { "errorWorkflow": "wf-error-handler" }
+  },
+  "executions": [
+    { "id": "5002", "workflowId": "wf-exec-4", "status": "success", "mode": "webhook", "startedAt": "2026-07-10T11:00:00.000Z", "stoppedAt": "2026-07-10T11:00:01.000Z" },
+    { "id": "5001", "workflowId": "wf-exec-4", "status": "success", "mode": "webhook", "startedAt": "2026-07-10T10:00:00.000Z", "stoppedAt": "2026-07-10T10:00:01.000Z" }
+  ],
+  "details": {
+    "5002": {
+      "id": "5002",
+      "status": "success",
+      "mode": "webhook",
+      "startedAt": "2026-07-10T11:00:00.000Z",
+      "stoppedAt": "2026-07-10T11:00:01.000Z",
+      "data": { "resultData": { "runData": { "Webhook": [{}], "Slack Notify": [{}] }, "lastNodeExecuted": "Slack Notify" } }
+    },
+    "5001": {
+      "id": "5001",
+      "status": "success",
+      "mode": "webhook",
+      "startedAt": "2026-07-10T10:00:00.000Z",
+      "stoppedAt": "2026-07-10T10:00:01.000Z",
+      "data": { "resultData": { "runData": { "Webhook": [{}], "Slack Notify": [{}] }, "lastNodeExecuted": "Slack Notify" } }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "Recursive batch processor",
+  "id": "wf-loop-1",
+  "active": false,
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "n2",
+      "name": "Process Batch",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0],
+      "parameters": {
+        "assignments": {
+          "assignments": [{ "id": "a1", "name": "batch", "value": "={{ $json.batch }}", "type": "string" }]
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Recurse Into Self",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [440, 0],
+      "parameters": {
+        "workflowId": { "__rl": true, "value": "wf-loop-1", "mode": "list" }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Process Batch", "type": "main", "index": 0 }]]
+    },
+    "Process Batch": {
+      "main": [[{ "node": "Recurse Into Self", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {}
+}
